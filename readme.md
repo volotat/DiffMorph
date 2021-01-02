@@ -13,6 +13,10 @@ Tensorflow 2.4.0
 
 ## Usage
 
+```bash
+morph.py -s images/img_1.jpg -t images/img_2.jpg [-e 10000 -a 0.8 -m 0.8 -w 0.3]
+```
+
 ## Idea
 
 
