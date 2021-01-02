@@ -1,4 +1,4 @@
-# Differentiable morphing
+# Differentiable Morphing
 
 Image morphing without reference points by applying warp maps and optimizing over them.
 
