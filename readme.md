@@ -1,7 +1,7 @@
 # Differentiable Morphing
 
 ### Image morphing without reference points by applying warp maps and optimizing over them.  
-It called "differentiable morphing" because neuranal network here is not used in traditional data to label mapping sence, but as an easy way to solve optimisation problem where one image is mapped to another via warp maps that are found by gradient dicent. So after maps are found there is no need for the network itself.
+It called "differentiable morphing" because neuronal network here is not used in traditional data to label mapping sence, but as an easy way to solve optimisation problem where one image is mapped to another via warp maps that are found by gradient dicent. So after maps are found there is no need for the network itself.
 
 ## Results
 ![example 1](images/example_1.gif)
