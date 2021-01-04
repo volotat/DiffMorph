@@ -32,7 +32,10 @@ Suppose we want to produce one image from another in a way that we use as much u
 First thing we could do is to add some color data to the image in pixel space and see what we get. (In all examples operations maps have intentionally lower resolution than the image itself, so all nuances of operations would be more noticeable)  
 
 
-Now, by aplying alpha scaling parameter to every map we will get smooth transition from one image to another.
+
+As a last step we will add warping operation that already exist in tensorflow as [dense_image_warp](https://www.tensorflow.org/addons/api_docs/python/tfa/image/dense_image_warp) and usually used for optical flow estimation tasks. 
+
+Now, by applying alpha scaling parameter to every map we will get smooth transition from one image to another without any loss of useful data (at least for the given toy example).
 
 ## Thoughts
 Image warp operation might be thought as long range convolution, because it can "grab" data from any point of an image and reshape it in some useful way. Therefore it might be benefitial to use warp operation in calssification task. But especially, it should be benefitial to use in generation task. It should be much easier to produce new data by combining and perturbating several examples of known data points than to learn a function that represents all data points at ones.
