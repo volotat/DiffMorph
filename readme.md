@@ -40,6 +40,6 @@ Here "Mult map" removes unnesecessery parts of an image and shifts color balance
 All maps are found by gradient descent using very simple convolution network. Now, by applying alpha scaling parameter to every map we will get smooth transition from one image to another without any loss of useful data (at least for the given toy example).  
   
 ![transition](images/transition.jpg)  
-
+  
 ## Thoughts
 Image warp operation might be thought as long range convolution, because it can "grab" data from any point of an image and reshape it in some useful way. Therefore it might be benefitial to use warp operation in calssification task. But especially, it should be benefitial to use in generation task. It should be much easier to produce new data by combining and perturbating several examples of known data points than to learn a function that represents all data points at ones.
