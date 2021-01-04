@@ -27,6 +27,7 @@ Unnecessery parameters:
 -w Warp map multiplyer  
   
 ## Idea
+
 Suppose we want to produce one image from another in a way that we use as much useful information as possible, so if two given images share any similarities between them we make use of these similarities. 
   
 ![toy_example](images/toy_example.jpg)  
@@ -39,7 +40,9 @@ Here "Mult map" removes unnesecessery parts of an image and shifts color balance
   
 All maps are found by gradient descent using very simple convolution network. Now, by applying alpha scaling parameter to every map we will get smooth transition from one image to another without any loss of useful data (at least for the given toy example).  
   
-![transition](images/transition.jpg)  
+![transition](images/transition.jpg) 
+  
   
 ## Thoughts
-Image warp operation might be thought as long range convolution, because it can "grab" data from any point of an image and reshape it in some useful way. Therefore it might be benefitial to use warp operation in calssification task. But especially, it should be benefitial to use in generation task. It should be much easier to produce new data by combining and perturbating several examples of known data points than to learn a function that represents all data points at ones.
+
+Notice, that all maps produced generate somewhat meaningful interpolation without any understanding of what exactly present in the images. That means that warp operation might be much more useful in images processing tasks. In some sense warp operation might be thought as long range convolution, because it can "grab" data from any point of an image and reshape it in some useful way. Therefore it might be beneficial to use warp operation in classification tasks and might allow networks be less susceptible to small perturbations of the data. But especially, it should be benefitial to use in generation task. It should be much easier to produce new data by combining and perturbating several examples of known data points than to learn a function that represents all data points at ones.
