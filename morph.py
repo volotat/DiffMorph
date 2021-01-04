@@ -107,7 +107,7 @@ def produce_warp_maps(origins, targets):
             np.save('preds.npy', preds.numpy())
         
 def use_warp_maps(origins, targets):
-    STEPS = 51
+    STEPS = 101
   
     preds = np.load('preds.npy')
     
