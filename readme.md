@@ -27,7 +27,12 @@ Unnecessery parameters:
 -w Warp map multiplyer  
   
 ## Idea
+Suppose we want to produce one image from another in a way that we use as much useful information as possible, so if two given images share any similarities between them we make use of these similarities.
 
+First thing we could do is to add some color data to the image in pixel space and see what we get. (In all examples operations maps have intentionally lower resolution than the image itself, so all nuances of operations would be more noticeable)  
+
+
+Now, by aplying alpha scaling parameter to every map we will get smooth transition from one image to another.
 
 ## Thoughts
 Image warp operation might be thought as long range convolution, because it can "grab" data from any point of an image and reshape it in some useful way. Therefore it might be benefitial to use warp operation in calssification task. But especially, it should be benefitial to use in generation task. It should be much easier to produce new data by combining and perturbating several examples of known data points than to learn a function that represents all data points at ones.
