@@ -10,15 +10,16 @@ TRAIN_EPOCHS = 1000
 im_sz = 512
 mp_sz = 128
 
-warp_scale = 0.2
+warp_scale = 0.1
 mult_scale = 0.4
 add_scale = 0.4
 
 
 @tf.function 
 def warp(origins, targets, preds_org, preds_trg):
-    res_targets = tfa.image.dense_image_warp(origins * (1 + preds_org[:,:,:,0:3] * mult_scale) + preds_org[:,:,:,3:6] * 2 * add_scale, preds_org[:,:,:,6:8] * im_sz * warp_scale )
+    res_targets = tfa.image.dense_image_warp(origins * (1 + preds_org[:,:,:,0:3] * mult_scale) + preds_org[:,:,:,3:6] * 2 * add_scale, preds_org[:,:,:,6:8] * im_sz * warp_scale )        
     res_origins = tfa.image.dense_image_warp(targets * (1 + preds_trg[:,:,:,0:3] * mult_scale) + preds_trg[:,:,:,3:6] * 2 * add_scale, preds_trg[:,:,:,6:8] * im_sz * warp_scale )
+
     return res_targets, res_origins
 
 def create_grid(scale):
@@ -32,15 +33,19 @@ def produce_warp_maps(origins, targets):
     class MyModel(tf.keras.Model):
         def __init__(self):
             super(MyModel, self).__init__()
-            self.conv1 = tf.keras.layers.Conv2D(64, (5, 5), activation='relu')
-            self.conv2 = tf.keras.layers.Conv2D(64, (5, 5), activation='relu')
-            self.conv3 = tf.keras.layers.Conv2D((3 + 3 + 2) * 2, (5, 5))
+            self.conv1 = tf.keras.layers.Conv2D(64, (5, 5))
+            self.act1 = tf.keras.layers.LeakyReLU(alpha=0.2)
+            self.conv2 = tf.keras.layers.Conv2D(64, (5, 5))
+            self.act2 = tf.keras.layers.LeakyReLU(alpha=0.2)
+            self.convo = tf.keras.layers.Conv2D((3 + 3 + 2) * 2, (5, 5))
 
         def call(self, maps):
             x = tf.image.resize(maps, [mp_sz, mp_sz])
             x = self.conv1(x)
+            x = self.act1(x)
             x = self.conv2(x)
-            x = self.conv3(x)
+            x = self.act2(x)
+            x = self.convo(x)
             return x
         
 
@@ -57,10 +62,13 @@ def produce_warp_maps(origins, targets):
         preds = model(maps)
         preds = tf.image.resize(preds, [im_sz, im_sz])
         
-        res_targets, res_origins = warp(origins, targets, preds[...,:8], preds[...,8:])
-        res_targets_half, res_origins_half = warp(origins, targets, preds[...,:8] * 0.5, preds[...,8:] * 0.5)
-
-        loss =  (loss_object(origins, res_origins) + loss_object(targets, res_targets)) + loss_object(res_targets_half, res_origins_half) 
+        a = tf.random.uniform([maps.shape[0]])
+        res_targets, res_origins = warp(origins, targets, preds[...,:8] * a, preds[...,8:] * (1 - a))
+        
+        res_map = tfa.image.dense_image_warp(maps, preds[:,:,:,6:8] * im_sz * warp_scale ) #warp maps consistency checker   
+        res_map = tfa.image.dense_image_warp(res_map, preds[:,:,:,14:16] * im_sz * warp_scale ) 
+        
+        loss = loss_object(res_targets, res_origins) * 0.5 + loss_object(maps, res_map) * 0.5
         
       gradients = tape.gradient(loss, model.trainable_variables)
       optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -68,7 +76,7 @@ def produce_warp_maps(origins, targets):
       train_loss(loss)
       
     maps = create_grid(im_sz)
-    maps = np.concatenate((maps, origins * 0.1, targets * 0.1), axis=-1)
+    maps = np.concatenate((maps, origins * 0.1, targets * 0.1), axis=-1).astype(np.float32)
   
     
     template = 'Epoch {}, Loss: {}'
@@ -99,32 +107,61 @@ def produce_warp_maps(origins, targets):
             np.save('preds.npy', preds.numpy())
         
 def use_warp_maps(origins, targets):
-    STEPS = 100
+    STEPS = 51
   
     preds = np.load('preds.npy')
+    
+    #save maps as images
+    res_img = np.zeros((im_sz * 2, im_sz * 3, 3))
+
+    res_img[im_sz*0:im_sz*1, im_sz*0:im_sz*1] = preds[0,:,:,0:3] # a_to_b add map
+    res_img[im_sz*0:im_sz*1, im_sz*1:im_sz*2] = preds[0,:,:,3:6] # a_to_b mult map
+    res_img[im_sz*0:im_sz*1, im_sz*2:im_sz*3, :2] = preds[0,:,:,6:8] # a_to_b warp map
+    
+    res_img[im_sz*1:im_sz*2, im_sz*0:im_sz*1] = preds[0,:,:,8:11] # b_to_a add map
+    res_img[im_sz*1:im_sz*2, im_sz*1:im_sz*2] = preds[0,:,:,11:14] # b_to_a mult map
+    res_img[im_sz*1:im_sz*2, im_sz*2:im_sz*3, :2] = preds[0,:,:,14:16] # b_to_a warp map
+    
+    res_img = np.clip(res_img, -1, 1)
+    res_img = ((res_img + 1) * 127.5).astype(np.uint8)
+    cv2.imwrite("morph/maps.jpg", cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
+    
+    
+    #apply maps and save results
     
     org_strength = tf.reshape(tf.range(STEPS, dtype=tf.float32), [STEPS, 1, 1, 1]) / (STEPS - 1) 
     trg_strength = tf.reverse(org_strength, axis = [0])
  
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video = cv2.VideoWriter('morph/morph.mp4', fourcc, 48, (im_sz, im_sz))
+    img_a = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
+    img_b = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
+    img_a_b = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
+    
+    res_img = np.zeros((im_sz * 3, im_sz * (STEPS // 10), 3), dtype = np.uint8)
+    
     for i in range(STEPS):
         preds_org = preds * org_strength[i]
         preds_trg = preds * trg_strength[i]
     
         res_targets, res_origins = warp(origins, targets, preds_org[...,:8], preds_trg[...,8:])
+        res_targets = tf.clip_by_value(res_targets, -1, 1)
+        res_origins = tf.clip_by_value(res_origins, -1, 1)
         
         results = res_targets * trg_strength + res_origins * org_strength
-        results = tf.clip_by_value(results, -1, 1)
         res_numpy = results.numpy()
     
-        res_img = ((res_numpy[i] + 1) * 127.5).astype(np.uint8)
-        cv2.imwrite("morph/%d.jpg" % (i+1), cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
+        img = ((res_numpy[i] + 1) * 127.5).astype(np.uint8)
+        video.write(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
-        video.write(cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
-        
-        if (i+1) % 10 == 0: print ('Image #%d saved.' % (i + 1))
-
+        if (i+1) % 10 == 0: 
+            res_img[im_sz*0:im_sz*1, i // 10 * im_sz : (i // 10 + 1) * im_sz] = img
+            res_img[im_sz*1:im_sz*2, i // 10 * im_sz : (i // 10 + 1) * im_sz] = ((res_targets.numpy()[0] + 1) * 127.5).astype(np.uint8)
+            res_img[im_sz*2:im_sz*3, i // 10 * im_sz : (i // 10 + 1) * im_sz] = ((res_origins.numpy()[0] + 1) * 127.5).astype(np.uint8)
+            print ('Image #%d produced.' % (i + 1))
+            
+    cv2.imwrite("morph/result.jpg", cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
+    
     cv2.destroyAllWindows()
     video.release()   
     print ('Result video saved.')    
@@ -148,7 +185,6 @@ if __name__ == "__main__":
         print("No target file provided!")
         exit()    
         
-    
     TRAIN_EPOCHS = args.train_epochs
     add_scale = args.add_scale
     mult_scale = args.mult_scale
