@@ -34,7 +34,7 @@ After several trials I found out that the best way to achieve such effect is to 
 
 Here, "Mult map" removes unnesecessery parts of an image and shifts color balance, "Add map" creates new colors that are not present in original image and "Warp map" distort an image in some way to reproduce shifting, rotation and scaling of objects. W operation is [dense_image_warp](https://www.tensorflow.org/addons/api_docs/python/tfa/image/dense_image_warp) method that present in tensorflow and usually used for optical flow estimation tasks. 
  
-Now, by applying alpha scaling parameter to every map we will get smooth transition from one image to another without any loss of useful data (at least for the given toy example).
+All maps are found by gradient descent using very simple convolution network. Now, by applying alpha scaling parameter to every map we will get smooth transition from one image to another without any loss of useful data (at least for the given toy example).
 
 ## Thoughts
 Image warp operation might be thought as long range convolution, because it can "grab" data from any point of an image and reshape it in some useful way. Therefore it might be benefitial to use warp operation in calssification task. But especially, it should be benefitial to use in generation task. It should be much easier to produce new data by combining and perturbating several examples of known data points than to learn a function that represents all data points at ones.
