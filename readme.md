@@ -27,14 +27,13 @@ Unnecessery parameters:
 -w Warp map multiplyer  
   
 ## Idea
-Suppose we want to produce one image from another in a way that we use as much useful information as possible, so if two given images share any similarities between them we make use of these similarities.
-
-First thing we could do is to add some color data to the image in pixel space and see what we get. (In all examples operations maps have intentionally lower resolution than the image itself, so all nuances of operations would be more noticeable)  
+Suppose we want to produce one image from another in a way that we use as much useful information as possible, so if two given images share any similarities between them we make use of these similarities. 
 
 
+After several trials I found out that the best way to achieve such effect is to use following formula.
 
-As a last step we will add warping operation that already exist in tensorflow as [dense_image_warp](https://www.tensorflow.org/addons/api_docs/python/tfa/image/dense_image_warp) and usually used for optical flow estimation tasks. 
-
+Here, "Mult map" removes unnesecessery parts of an image and shifts color balance, "Add map" creates new colors that are not present in original image and "Warp map" distort an image in some way to reproduce shifting, rotation and scaling of objects. W operation is [dense_image_warp](https://www.tensorflow.org/addons/api_docs/python/tfa/image/dense_image_warp) method that present in tensorflow and usually used for optical flow estimation tasks. 
+ 
 Now, by applying alpha scaling parameter to every map we will get smooth transition from one image to another without any loss of useful data (at least for the given toy example).
 
 ## Thoughts
