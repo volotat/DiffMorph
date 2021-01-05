@@ -8,17 +8,21 @@ import argparse
 TRAIN_EPOCHS = 1000
 
 im_sz = 512
-mp_sz = 128
+mp_sz = 96
 
-warp_scale = 0.1
-mult_scale = 0.4
-add_scale = 0.4
+warp_scale = 0.05
+mult_scale = 0.8
+add_scale = 0.8
 
 
 @tf.function 
-def warp(origins, targets, preds_org, preds_trg):
-    res_targets = tfa.image.dense_image_warp(origins * (1 + preds_org[:,:,:,0:3] * mult_scale) + preds_org[:,:,:,3:6] * 2 * add_scale, preds_org[:,:,:,6:8] * im_sz * warp_scale )        
-    res_origins = tfa.image.dense_image_warp(targets * (1 + preds_trg[:,:,:,0:3] * mult_scale) + preds_trg[:,:,:,3:6] * 2 * add_scale, preds_trg[:,:,:,6:8] * im_sz * warp_scale )
+def warp(origins, targets, preds_org, preds_trg, add_first = True):
+    if add_first:
+        res_targets = tfa.image.dense_image_warp((origins + preds_org[:,:,:,3:6] * 2 * add_scale) * tf.maximum(0.1, 1 + preds_org[:,:,:,0:3] * mult_scale) , preds_org[:,:,:,6:8] * im_sz * warp_scale )        
+        res_origins = tfa.image.dense_image_warp((targets + preds_trg[:,:,:,3:6] * 2 * add_scale) * tf.maximum(0.1, 1 + preds_trg[:,:,:,0:3] * mult_scale) , preds_trg[:,:,:,6:8] * im_sz * warp_scale )
+    else:
+        res_targets = tfa.image.dense_image_warp(origins * tf.maximum(0.1, 1 + preds_org[:,:,:,0:3] * mult_scale) + preds_org[:,:,:,3:6] * 2 * add_scale, preds_org[:,:,:,6:8] * im_sz * warp_scale )        
+        res_origins = tfa.image.dense_image_warp(targets * tf.maximum(0.1, 1 + preds_trg[:,:,:,0:3] * mult_scale) + preds_trg[:,:,:,3:6] * 2 * add_scale, preds_trg[:,:,:,6:8] * im_sz * warp_scale )
 
     return res_targets, res_origins
 
@@ -107,7 +111,7 @@ def produce_warp_maps(origins, targets):
             np.save('preds.npy', preds.numpy())
         
 def use_warp_maps(origins, targets):
-    STEPS = 101
+    STEPS = 51
   
     preds = np.load('preds.npy')
     
