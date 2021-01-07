@@ -13,10 +13,11 @@ mp_sz = 96
 warp_scale = 0.05
 mult_scale = 0.8
 add_scale = 0.8
+add_first = False
 
 
 @tf.function 
-def warp(origins, targets, preds_org, preds_trg, add_first = True):
+def warp(origins, targets, preds_org, preds_trg):
     if add_first:
         res_targets = tfa.image.dense_image_warp((origins + preds_org[:,:,:,3:6] * 2 * add_scale) * tf.maximum(0.1, 1 + preds_org[:,:,:,0:3] * mult_scale) , preds_org[:,:,:,6:8] * im_sz * warp_scale )        
         res_origins = tfa.image.dense_image_warp((targets + preds_trg[:,:,:,3:6] * 2 * add_scale) * tf.maximum(0.1, 1 + preds_trg[:,:,:,0:3] * mult_scale) , preds_trg[:,:,:,6:8] * im_sz * warp_scale )
@@ -178,6 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--add_scale", help="Scaler for addition map", default = add_scale, type=float)
     parser.add_argument("-m", "--mult_scale", help="Scaler for multiplication map", default = mult_scale, type=float)
     parser.add_argument("-w", "--warp_scale", help="Scaler for warping map", default = warp_scale, type=float)
+    parser.add_argument("-add_first", "--add_first", help="Should you add or multiply maps first", default = add_first, type=bool)
 
     args = parser.parse_args()
     
@@ -193,7 +195,7 @@ if __name__ == "__main__":
     add_scale = args.add_scale
     mult_scale = args.mult_scale
     warp_scale = args.warp_scale
-    
+    add_first = args.add_first
     
     dom_a = cv2.imread(args.source, cv2.IMREAD_COLOR)
     dom_a = cv2.cvtColor(dom_a, cv2.COLOR_BGR2RGB)
