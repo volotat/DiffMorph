@@ -10,7 +10,7 @@ Differentiable Morphing is machine learning algorithm that can morph any two ima
 
 ## Dependencies
 
-Tensorflow 2.4.0
+Tensorflow 2.3.0 and above.
 
 ## Usage
 
