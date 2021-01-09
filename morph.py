@@ -11,8 +11,8 @@ im_sz = 512
 mp_sz = 96
 
 warp_scale = 0.05
-mult_scale = 0.8
-add_scale = 0.8
+mult_scale = 0.4
+add_scale = 0.4
 add_first = False
 
 
@@ -67,13 +67,14 @@ def produce_warp_maps(origins, targets):
         preds = model(maps)
         preds = tf.image.resize(preds, [im_sz, im_sz])
         
-        a = tf.random.uniform([maps.shape[0]])
-        res_targets, res_origins = warp(origins, targets, preds[...,:8] * a, preds[...,8:] * (1 - a))
+        #a = tf.random.uniform([maps.shape[0]])
+        #res_targets, res_origins = warp(origins, targets, preds[...,:8] * a, preds[...,8:] * (1 - a))
+        res_targets_, res_origins_ = warp(origins, targets, preds[...,:8], preds[...,8:])
         
         res_map = tfa.image.dense_image_warp(maps, preds[:,:,:,6:8] * im_sz * warp_scale ) #warp maps consistency checker   
         res_map = tfa.image.dense_image_warp(res_map, preds[:,:,:,14:16] * im_sz * warp_scale ) 
         
-        loss = loss_object(res_targets, res_origins) * 0.5 + loss_object(maps, res_map) * 0.5
+        loss = loss_object(maps, res_map) * 1 + loss_object(res_targets_, targets) * 0.3 + loss_object(res_origins_, origins) * 0.3
         
       gradients = tape.gradient(loss, model.trainable_variables)
       optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -112,7 +113,7 @@ def produce_warp_maps(origins, targets):
             np.save('preds.npy', preds.numpy())
         
 def use_warp_maps(origins, targets):
-    STEPS = 51
+    STEPS = 101
   
     preds = np.load('preds.npy')
     
