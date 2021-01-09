@@ -10,12 +10,12 @@ Differentiable Morphing is machine learning algorithm that can morph any two ima
 
 ## Dependencies
 
-Tensorflow 2.4.0
+Tensorflow 2.1.3 and above.
 
 ## Usage
 
 ```bash
-morph.py -s images/img_1.jpg -t images/img_2.jpg [-e 1000 -a 0.8 -m 0.8 -w 0.3]
+morph.py -s images/img_1.jpg -t images/img_2.jpg
 ```
 -s Source file  
 -t Target file  
@@ -25,6 +25,7 @@ Unnecessery parameters:
 -a Addition map multiplyer  
 -m Multiplication map multiplyer  
 -w Warp map multiplyer  
+-add_first If true add map would be applyed to the source image before mult map. (might work better in some cases)
   
 ## Idea
 
