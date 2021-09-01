@@ -3,11 +3,12 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 import cv2
 import argparse
+from tqdm import tqdm
 
 
 TRAIN_EPOCHS = 1000
 
-im_sz = 512
+im_sz = 1024
 mp_sz = 96
 
 warp_scale = 0.05
@@ -84,15 +85,18 @@ def produce_warp_maps(origins, targets):
     maps = create_grid(im_sz)
     maps = np.concatenate((maps, origins * 0.1, targets * 0.1), axis=-1).astype(np.float32)
   
-    
+    epoch = 0
     template = 'Epoch {}, Loss: {}'
-    for i in range(TRAIN_EPOCHS):
-        epoch = i + 1  
+
+    t = tqdm(range(TRAIN_EPOCHS), desc=template.format(epoch, train_loss.result()))
+
+    for i in t:
+        epoch = i + 1
+
+        t.set_description(template.format(epoch, train_loss.result()))
+        t.refresh()
+
         train_step(maps, origins, targets)
-
-        if epoch % 100 == 0:
-            print (template.format(epoch, train_loss.result()))  
-
         
         if (epoch < 100 and epoch % 10 == 0) or\
            (epoch < 1000 and epoch % 100 == 0) or\
@@ -112,9 +116,9 @@ def produce_warp_maps(origins, targets):
             
             np.save('preds.npy', preds.numpy())
         
-def use_warp_maps(origins, targets):
-    STEPS = 101
-  
+def use_warp_maps(origins, targets, fps, steps):
+    STEPS = steps
+    
     preds = np.load('preds.npy')
     
     #save maps as images
@@ -139,14 +143,14 @@ def use_warp_maps(origins, targets):
     trg_strength = tf.reverse(org_strength, axis = [0])
  
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter('morph/morph.mp4', fourcc, 48, (im_sz, im_sz))
+    video = cv2.VideoWriter('morph/morph.mp4', fourcc, fps, (im_sz, im_sz))
     img_a = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     img_b = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     img_a_b = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     
     res_img = np.zeros((im_sz * 3, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     
-    for i in range(STEPS):
+    for i in tqdm(range(STEPS)):
         preds_org = preds * org_strength[i]
         preds_trg = preds * trg_strength[i]
     
@@ -154,17 +158,16 @@ def use_warp_maps(origins, targets):
         res_targets = tf.clip_by_value(res_targets, -1, 1)
         res_origins = tf.clip_by_value(res_origins, -1, 1)
         
-        results = res_targets * trg_strength + res_origins * org_strength
+        results = res_targets * trg_strength[i] + res_origins * org_strength[i]
         res_numpy = results.numpy()
     
-        img = ((res_numpy[i] + 1) * 127.5).astype(np.uint8)
+        img = ((res_numpy[0] + 1) * 127.5).astype(np.uint8)
         video.write(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
         if (i+1) % 10 == 0: 
             res_img[im_sz*0:im_sz*1, i // 10 * im_sz : (i // 10 + 1) * im_sz] = img
             res_img[im_sz*1:im_sz*2, i // 10 * im_sz : (i // 10 + 1) * im_sz] = ((res_targets.numpy()[0] + 1) * 127.5).astype(np.uint8)
             res_img[im_sz*2:im_sz*3, i // 10 * im_sz : (i // 10 + 1) * im_sz] = ((res_origins.numpy()[0] + 1) * 127.5).astype(np.uint8)
-            print ('Image #%d produced.' % (i + 1))
             
     cv2.imwrite("morph/result.jpg", cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
     
@@ -181,6 +184,9 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mult_scale", help="Scaler for multiplication map", default = mult_scale, type=float)
     parser.add_argument("-w", "--warp_scale", help="Scaler for warping map", default = warp_scale, type=float)
     parser.add_argument("-add_first", "--add_first", help="Should you add or multiply maps first", default = add_first, type=bool)
+
+    parser.add_argument("--fps", help="FPS of the result video", default=45, type=int)
+    parser.add_argument("--steps", help="Total number of frames to generate", default=100, type=int)
 
     args = parser.parse_args()
     
@@ -212,4 +218,4 @@ if __name__ == "__main__":
     targets = dom_b.reshape(1, im_sz, im_sz, 3).astype(np.float32)
 
     produce_warp_maps(origins, targets)
-    use_warp_maps(origins, targets)
+    use_warp_maps(origins, targets, args.fps, args.steps)
