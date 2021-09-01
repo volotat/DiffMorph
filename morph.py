@@ -117,10 +117,8 @@ def produce_warp_maps(origins, targets):
             np.save('preds.npy', preds.numpy())
         
 def use_warp_maps(origins, targets, fps, steps):
-    STEPS = steps + 1
+    STEPS = steps
     
-    print(fps, steps)
-
     preds = np.load('preds.npy')
     
     #save maps as images
@@ -219,5 +217,5 @@ if __name__ == "__main__":
     origins = dom_a.reshape(1, im_sz, im_sz, 3).astype(np.float32)
     targets = dom_b.reshape(1, im_sz, im_sz, 3).astype(np.float32)
 
-    # produce_warp_maps(origins, targets)
+    produce_warp_maps(origins, targets)
     use_warp_maps(origins, targets, args.fps, args.steps)
