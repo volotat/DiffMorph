@@ -13,7 +13,7 @@ Differentiable Morphing is machine learning algorithm that can morph any two ima
 Tensorflow 2.1.3 and above.
 
 ## Example notebook
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chigozienri/DiffMorph/blob/master/DiffMorph.ipynb]
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chigozienri/DiffMorph/blob/master/DiffMorph.ipynb)
 
 ## Usage
 
