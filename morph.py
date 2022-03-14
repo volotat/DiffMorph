@@ -4,6 +4,7 @@ import tensorflow_addons as tfa
 import cv2
 import argparse
 from tqdm import tqdm
+import os
 
 
 TRAIN_EPOCHS = 1000
@@ -116,7 +117,7 @@ def produce_warp_maps(origins, targets):
             
             np.save('preds.npy', preds.numpy())
         
-def use_warp_maps(origins, targets, fps, steps):
+def use_warp_maps(origins, targets, fps, steps, output_folder="morph"):
     STEPS = steps
     
     preds = np.load('preds.npy')
@@ -134,7 +135,7 @@ def use_warp_maps(origins, targets, fps, steps):
     
     res_img = np.clip(res_img, -1, 1)
     res_img = ((res_img + 1) * 127.5).astype(np.uint8)
-    cv2.imwrite("morph/maps.jpg", cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(os.path.join(output_folder, "maps.jpg"), cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
     
     
     #apply maps and save results
@@ -143,14 +144,21 @@ def use_warp_maps(origins, targets, fps, steps):
     trg_strength = tf.reverse(org_strength, axis = [0])
  
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter('morph/morph.mp4', fourcc, fps, (im_sz, im_sz))
+    video = cv2.VideoWriter(os.path.join(output_folder, "morph.mp4"), fourcc, fps, (im_sz, im_sz))
+
+
+
     img_a = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     img_b = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     img_a_b = np.zeros((im_sz, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     
     res_img = np.zeros((im_sz * 3, im_sz * (STEPS // 10), 3), dtype = np.uint8)
     
-    for i in tqdm(range(STEPS)):
+    all_im_path = os.path.join(output_folder, "all_steps")
+    if not os.path.exists(all_im_path):
+        os.mkdir(all_im_path)
+
+    for i in tqdm(range(STEPS), desc="Generating images:"):
         preds_org = preds * org_strength[i]
         preds_trg = preds * trg_strength[i]
     
@@ -164,12 +172,14 @@ def use_warp_maps(origins, targets, fps, steps):
         img = ((res_numpy[0] + 1) * 127.5).astype(np.uint8)
         video.write(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
-        if (i+1) % 10 == 0: 
+        cv2.imwrite(os.path.join(all_im_path, f"step_{i:05d}.png"), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+
+        if (i+1) % 10 == 0:
             res_img[im_sz*0:im_sz*1, i // 10 * im_sz : (i // 10 + 1) * im_sz] = img
             res_img[im_sz*1:im_sz*2, i // 10 * im_sz : (i // 10 + 1) * im_sz] = ((res_targets.numpy()[0] + 1) * 127.5).astype(np.uint8)
             res_img[im_sz*2:im_sz*3, i // 10 * im_sz : (i // 10 + 1) * im_sz] = ((res_origins.numpy()[0] + 1) * 127.5).astype(np.uint8)
             
-    cv2.imwrite("morph/result.jpg", cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(os.path.join(output_folder, "result.jpg"), cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
     
     cv2.destroyAllWindows()
     video.release()   
@@ -197,7 +207,22 @@ if __name__ == "__main__":
     if not args.target: 
         print("No target file provided!")
         exit()    
-        
+
+    main_folder = "morph/morph"
+    i = 0
+    output_folder = main_folder + f"_{i}"
+    while os.path.exists(output_folder):
+        i += 1
+        output_folder = main_folder + f"_{i}"
+    os.mkdir(output_folder)
+    
+    with open(os.path.join(output_folder, "files.txt"), "w") as f:
+        for a in args._get_args():
+            f.write(f"{a}\n")
+        for kw, val in args._get_kwargs():
+            f.write(f"{kw} = {val}\n")
+
+
     TRAIN_EPOCHS = args.train_epochs
     add_scale = args.add_scale
     mult_scale = args.mult_scale
@@ -218,4 +243,4 @@ if __name__ == "__main__":
     targets = dom_b.reshape(1, im_sz, im_sz, 3).astype(np.float32)
 
     produce_warp_maps(origins, targets)
-    use_warp_maps(origins, targets, args.fps, args.steps)
+    use_warp_maps(origins, targets, args.fps, args.steps, output_folder=output_folder)
