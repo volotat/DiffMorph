@@ -45,6 +45,7 @@ class Morph:
     add_first = False
 
     preds = None
+    save_preds = False
     fps = 45
 
     def __init__(self, output_folder="", **kwargs):
@@ -188,7 +189,8 @@ class Morph:
 
                 self.preds = preds.numpy()
 
-        np.save(os.path.join(self.output_folder, "preds.npy"), self.preds)
+        if self.save_preds:
+            np.save(os.path.join(self.output_folder, "preds.npy"), self.preds)
 
     def use_warp_maps(self, origins, targets, steps, fps=None):
         STEPS = steps
