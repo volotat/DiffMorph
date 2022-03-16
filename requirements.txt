@@ -2,3 +2,4 @@ numpy
 tensorflow
 tensorflow-addons
 opencv-python
+tqdm
