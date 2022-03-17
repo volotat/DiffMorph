@@ -16,7 +16,7 @@ def move_right_on_nan(row):
     return row
 
 
-def get_morhping_info_from_specs(specification_path, positions_path):
+def get_morphing_info_from_specs(specification_path, positions_path):
     """ Parse corresponding specification and positions, and get number of inbetween needed morphing and
         their lengths and widths
 
@@ -83,10 +83,9 @@ def pretty_print(morhping_dict):
 
 
 if __name__ == "__main__":
-    spec_path = "data/grating_design_specifications.txt"
-    pos_path = "data/grating_position.txt"
+    spec_path = "data/grating_design_specifications_test.txt"
+    pos_path = "data/grating_position_test.txt"
 
-    morhings_needed = get_morhping_info_from_specs(spec_path, pos_path)
+    morhings_needed = get_morphing_info_from_specs(spec_path, pos_path)
 
-    pretty_print(morhings_needed)
     pretty_print(morhings_needed)

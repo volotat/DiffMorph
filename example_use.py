@@ -1,6 +1,10 @@
 import os
 import numpy as np
-from morph_tools import morph, crop_image_to_size, pad_image_to_square, load_image, save_image, pad_images_to_same_square
+import morph_tools
+from morph_tools import morph, crop_image_to_size, pad_image_to_square, load_image, save_image, \
+    pad_images_to_same_square
+
+import grating_helper
 
 """
 Expample of how to use the functions in morph_tools, to load two images, pad them to be square,
@@ -29,9 +33,10 @@ save_image(trg_name_padded, trg)
 # Train and morph the images
 png_image_paths, npy_image_paths = morph(org_name_padded,  # Source file name
                                          trg_name_padded,  # Target file name
-                                         10,               #
+                                         10,  #
                                          output_folder="morph/small_test/",
                                          im_sz=org.shape[0],
+                                         mp_sz=200,
                                          train_epochs=50,
                                          )
 
@@ -48,3 +53,23 @@ for i, p in enumerate(png_image_paths):
 
 print("Done")
 
+
+## New example
+
+specs = grating_helper.get_morphing_info_from_specs(specification_path, positions_path)
+
+i = 0
+scale = 0.005 # Scale um/px for this run
+
+for source, target in zip(source_images, target_images):
+    morph_class_trained = morph_tools.setup_morpher(source, target, output_folder=f"Outputs_{i}")
+
+    # Get relevant specs and dimensions for with specs
+    ....
+
+    source_dim = source.shape[:2]
+    target_dim = target.shape[:2]
+    for dim in needed_dimensions:
+        im = morph_tools.single_image_morpher(morph_class_trained, dim, source_dim, target_dim, scale, save_images=True)
+
+print("Done")

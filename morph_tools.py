@@ -1,3 +1,5 @@
+import os.path
+
 import numpy as np
 from morphing import Morph
 import cv2
@@ -10,6 +12,36 @@ COLOR_LOOKUP = {"black": [0, 0, 0],
                 "red": [255, 0, 0],
                 "green": [0, 255, 0],
                 "blue": [0, 0, 255]}
+
+
+def make_image_rgb(image):
+    """ Takes a grayscale numpy image and makes it RGB
+
+    If image already has a 3'rd dim with size 3, it does nothing.
+
+    Parameters
+    ----------
+    image : np.ndarray
+        Image to make RGB
+
+    Returns
+    -------
+    np.ndarray
+        array with shape (h,w,3)
+
+    """
+    if image.ndim < 2 or image.ndim > 3:
+        raise ValueError(f"Number of dimensions should be 2 or 3, not {image.ndim}")
+
+    if image.ndim == 2:
+        return np.repeat(image[:, :, np.newaxis], 3, axis=2)
+
+    if image.shape[2] == 1:
+        return np.repeat(image, 3, axis=2)
+    elif image.shape[2] == 3:
+        return image
+
+    raise ValueError(f"Could not convert image with shape {image.shape}")
 
 
 def load_image(file):
@@ -29,7 +61,7 @@ def load_image(file):
     return cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
 
-def save_image(path, array):
+def save_image(path, array, detect_range=True):
     """ Save a numpy array as a RGB image.
 
     Parameters
@@ -38,14 +70,28 @@ def save_image(path, array):
         Path where to save file
     array : np.ndarray
         image (as a numpy array) to save.
+    detect_range : bool (optional)
+        If it should be detected whether the scale is [0,1] or [0, 255], and tru to convert to [0, 255]
 
     Returns
     -------
 
     """
+    if detect_range:
+        if np.max(array) <= 1.0:
+            array *= 255
+
+    array = make_image_rgb(array)
     succes = cv2.imwrite(path, cv2.cvtColor(array.astype(np.uint8), cv2.COLOR_RGB2BGR))
     if not succes:
         raise RuntimeError("Image not saved sucessfully")
+
+
+def interpolate_pct(wanted, source, target):
+    if source > target:
+        raise ValueError("Source should be smaller than target value")
+
+    return (target - source) / (wanted - source)
 
 
 def morph(source, target, steps, output_folder, **kwargs):
@@ -80,6 +126,114 @@ def morph(source, target, steps, output_folder, **kwargs):
     png_image_paths, npy_image_paths = mc.use_warp_maps(source, target, steps)
 
     return png_image_paths, npy_image_paths
+
+
+def setup_morpher(source, target, output_folder, **kwargs):
+    """
+
+    Parameters
+    ----------
+    source : str or np.ndarray
+        Path to the source image or image as numpy array
+    target : str or np.ndarray
+        Path to the target image or image as numpy array
+    steps :
+        Number of images wanted in the sequence
+    output_folder : str
+        Folder to save results to
+    kwargs
+        Keyword arguments passed to Morph class
+
+    Returns
+    -------
+    Morph
+        Trained class for morphing
+
+    """
+    # Prepare images
+    if isinstance(source, str):
+        source = load_image(source)
+    else:
+        source = make_image_rgb(source)
+
+    if isinstance(target, str):
+        target = load_image(target)
+    else:
+        target = make_image_rgb(target)
+
+    # Pad them to the same square size
+    source, target = pad_images_to_same_square(source, target, color="black")
+
+    src_name_padded = os.path.join(output_folder, "source_image_padded.png")
+    trg_name_padded = os.path.join(output_folder, "target_image_padded.png")
+    save_image(src_name_padded, source)
+    save_image(trg_name_padded, target)
+
+    im_size = source.shape[0]
+    mc = Morph(output_folder=output_folder, im_sz=im_size, **kwargs)
+
+    logger.info("Training model, this might take a while")
+    mc.produce_warp_maps(source, target)
+    logger.info("Training Done")
+
+    return mc
+
+
+def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale, save_images=True, name=""):
+    """
+
+    Parameters
+    ----------
+    save_images
+    morph_class : morphing.Morph
+        A trained instance of the Morph class.
+    morphed_dim : tuple
+        Tuple (height, width) in um, dimensions of the wanted morphed image
+    source_dim : tuple
+        Tuple (height, width) in um, dimensions of the original source image
+    target_dim : tuple
+        Tuple (height, width) in um, dimensions of the original target
+    scale : float
+        Resolutions of image as: um pr pixel
+    save_images : bool or string
+        Folder to save images to default folder from morph_class or a specific folder
+    name : str
+        Name to be used for the file along with dimensions
+
+    Returns
+    -------
+    np.ndarray
+        Morhped image
+    """
+
+    for t in (morphed_dim, source_dim, target_dim):
+        assert isinstance(t, (tuple, list, np.ndarray)), f"Dimensions must be given as 2-tuples, not {t}"
+        assert len(t) == 2, f"Dimensions must have length 2, got a dimension of {t}"
+
+    height_pct = interpolate_pct(morphed_dim[0], source_dim[0], target_dim[0])
+    width_pct = interpolate_pct(morphed_dim[1], source_dim[1], target_dim[1])
+
+    if not np.isclose(width_pct, height_pct):
+        logger.debug("Relative height and width placement is not close. Using relative height.")
+
+    morphed_im = morph_class.generate_single_morphed(height_pct)
+
+    crop_im = crop_image_to_size(morphed_im, morphed_dim, scale)
+
+    if save_images:
+        if isinstance(save_images, str):
+            outdir = save_images
+        else:
+            outdir = os.path.join(morph_class.output_folder, "single_morphed")
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
+
+        if not name:
+            name = "single_morph"
+        name += f"_{morphed_dim[0]}x{morphed_dim[1]}_{height_pct}pct.png"
+
+        save_image(os.path.join(outdir, name), crop_im, detect_range=False)
+    return crop_im
 
 
 def crop_image_to_size(image, size, scale, pos="cc"):
@@ -201,6 +355,7 @@ def pad_images_to_same_square(*images, **kwargs):
     for im in images:
         all_padded.append(pad_image_to_square(im, **kwargs))
     return all_padded
+
 
 def _get_vpos_idx(large_size, small_size, pos):
     if pos == "c":

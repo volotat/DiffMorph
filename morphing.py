@@ -46,7 +46,9 @@ class Morph:
 
     preds = None
     save_preds = False
-    fps = 45
+    origins = None
+    targets = None
+    fps = 30
 
     def __init__(self, output_folder="", **kwargs):
 
@@ -58,7 +60,7 @@ class Morph:
             assert hasattr(self, kw), f"No attribute to set with name '{kw}'"
             setattr(self, kw, val)
 
-    def load_image(self, image):
+    def load_image_file(self, image):
         """ Load image from file.
 
         Image will be resized fit the image shape needed by the network.
@@ -122,6 +124,9 @@ class Morph:
         self.preds = np.load(path)
 
     def produce_warp_maps(self, origins, targets):
+
+        self.origins = origins
+        self.targets = targets
 
         model = MorphModel(map_size=self.mp_sz)
 
@@ -199,7 +204,7 @@ class Morph:
             fps = self.fps
 
         if self.preds is None:
-            raise ValueError(f"Weights are not defined, use produce_warp_maps() to train model or load_preds()"
+            raise AttributeError(f"Weights are not defined, use produce_warp_maps() to train model or load_preds()"
                              f"to set weights from a file")
         preds = self.preds
 
@@ -272,3 +277,39 @@ class Morph:
         logging.info(f"Result video saved to {os.path.join(self.output_folder, 'result.jpg')}.")
 
         return png_image_paths, npy_image_paths
+
+    def generate_single_morphed(self, morph_pct, origins=None, targets=None):
+
+        if origins is None:
+            origins = self.origins
+        if targets is None:
+            targets = self.targets
+
+        STEPS = 100
+
+        if self.preds is None:
+            raise AttributeError(f"Weights are not defined, use produce_warp_maps() to train model or load_preds()"
+                             f"to set weights from a file")
+        preds = self.preds
+
+        if not 0 < morph_pct < 100:
+            ValueError(f"Morph percentage should be an integer between 0-100. Got {morph_pct}")
+        morph_pct = int(morph_pct)
+
+
+        # apply maps and save results
+        org_strength = tf.reshape(tf.range(STEPS, dtype=tf.float32), [STEPS, 1, 1, 1]) / (STEPS - 1)
+        trg_strength = tf.reverse(org_strength, axis=[0])
+
+        preds_org = preds * org_strength[morph_pct]
+        preds_trg = preds * trg_strength[morph_pct]
+
+        res_targets, res_origins = self.warp(origins, targets, preds_org[..., :8], preds_trg[..., 8:])
+        res_targets = tf.clip_by_value(res_targets, -1, 1)
+        res_origins = tf.clip_by_value(res_origins, -1, 1)
+
+        results = res_targets * trg_strength[morph_pct] + res_origins * org_strength[i]
+        res_numpy = results.numpy()
+
+        img = ((res_numpy[0] + 1) * 127.5).astype(np.uint8)
+        return img
