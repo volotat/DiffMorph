@@ -336,7 +336,8 @@ def pad_image_to_square(image, size=None, color="black", pos="cc"):
 
     # Debug
     if not padded[vtop:vbot, hleft:hright, :].shape == image.shape:
-        raise RuntimeError("Something went wrong cutout does not match image")
+        raise RuntimeError(f"Something went wrong cutout does not match image. "
+                           f"{padded[vtop:vbot, hleft:hright, :].shape} != {image.shape}")
 
     padded[vtop:vbot, hleft:hright, :] = image
 
@@ -371,6 +372,10 @@ def _get_vpos_idx(large_size, small_size, pos):
     else:
         raise RuntimeError(f"Unexpected vpos of {pos}")
 
+    # limit to image size, no wrapping,
+    vtop = max(0, vtop)
+    vbot = max(0, vbot)
+
     return vtop, vbot
 
 
@@ -387,5 +392,9 @@ def _get_hpos_idx(large_size, small_size, pos):
         hright = large_size
     else:
         raise RuntimeError(f"Unexpected hpos of {pos}")
+
+    # limit to image size, no wrapping,
+    hleft = max(0, hleft)
+    hright = max(0, hright)
 
     return hleft, hright
