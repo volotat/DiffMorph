@@ -16,7 +16,7 @@ def move_right_on_nan(row):
     return row
 
 
-def get_morphing_info_from_specs(specification_path, positions_path):
+def get_morphing_info_from_specs(specification_path, positions_path, n_mod_fun=None):
     """ Parse corresponding specification and positions, and get number of inbetween needed morphing and
         their lengths and widths
 
@@ -27,6 +27,9 @@ def get_morphing_info_from_specs(specification_path, positions_path):
 
     positions_path : str
         Path to the Grating position file, like: grating_position.txt
+
+    n_mod_fun : function
+        Function that modify the N value if needed. Default: None
 
     Returns
     -------
@@ -56,6 +59,8 @@ def get_morphing_info_from_specs(specification_path, positions_path):
         id_count += 1
         specs = df_specs[i:i + 2]
         N = int(np.max(specs[spec_n_col]))
+        if n_mod_fun:
+            N = n_mod_fun(N)
 
         id = f"N{N}_{id_count}"
         min_len = specs[spec_length_col].min()

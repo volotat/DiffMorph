@@ -56,6 +56,9 @@ print("Done")
 
 ## New example
 
+
+"""
+# Psudo example 
 specs = grating_helper.get_morphing_info_from_specs(specification_path, positions_path)
 
 i = 0
@@ -73,3 +76,36 @@ for source, target in zip(source_images, target_images):
         im = morph_tools.single_image_morpher(morph_class_trained, dim, source_dim, target_dim, scale, save_images=True)
 
 print("Done")
+
+
+import os
+import numpy as np
+import morph_tools
+from morph_tools import morph, crop_image_to_size, pad_image_to_square, load_image, save_image, \
+    pad_images_to_same_square
+
+import grating_helper
+from glob import glob
+
+specification_path = "data/grating_design_specifications.txt"
+positions_path = "data/grating_position.txt"
+
+specs = grating_helper.get_morphing_info_from_specs(specification_path, positions_path)
+
+source_images = glob("")
+
+for source, target in zip(source_images, target_images):
+    morph_class_trained = morph_tools.setup_morpher(source, target, output_folder=f"Outputs_{i}")
+
+    # Get relevant specs and dimensions for with specs
+    ....
+
+    source_dim = source.shape[:2]
+    target_dim = target.shape[:2]
+    for dim in needed_dimensions:
+        im = morph_tools.single_image_morpher(morph_class_trained, dim, source_dim, target_dim, scale, save_images=True)
+
+
+
+## Fix specification file
+"""

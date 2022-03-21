@@ -1,3 +1,4 @@
+import logging
 import os.path
 
 import numpy as np
@@ -5,7 +6,7 @@ from morphing import Morph
 import cv2
 from nilt_base.NILTlogger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("NILTlogger.morph_tool")
 
 COLOR_LOOKUP = {"black": [0, 0, 0],
                 "white": [255, 255, 255],
@@ -85,13 +86,14 @@ def save_image(path, array, detect_range=True):
     succes = cv2.imwrite(path, cv2.cvtColor(array.astype(np.uint8), cv2.COLOR_RGB2BGR))
     if not succes:
         raise RuntimeError("Image not saved sucessfully")
+    else:
+        logging.debug(f"Successfully saved image to {path}")
 
 
 def interpolate_pct(wanted, source, target):
     if source > target:
         raise ValueError("Source should be smaller than target value")
-
-    return (target - source) / (wanted - source)
+    return (wanted - source) / (target - source)
 
 
 def morph(source, target, steps, output_folder, **kwargs):
@@ -119,8 +121,8 @@ def morph(source, target, steps, output_folder, **kwargs):
     """
 
     mc = Morph(output_folder=output_folder, **kwargs)
-    source = mc.load_image(source)
-    target = mc.load_image(target)
+    source = mc.load_image_file(source)
+    target = mc.load_image_file(target)
 
     mc.produce_warp_maps(source, target)
     png_image_paths, npy_image_paths = mc.use_warp_maps(source, target, steps)
@@ -173,6 +175,8 @@ def setup_morpher(source, target, output_folder, **kwargs):
     mc = Morph(output_folder=output_folder, im_sz=im_size, **kwargs)
 
     logger.info("Training model, this might take a while")
+    source = mc.load_image_file(src_name_padded)
+    target = mc.load_image_file(trg_name_padded)
     mc.produce_warp_maps(source, target)
     logger.info("Training Done")
 
@@ -211,11 +215,11 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
         assert len(t) == 2, f"Dimensions must have length 2, got a dimension of {t}"
 
     height_pct = interpolate_pct(morphed_dim[0], source_dim[0], target_dim[0])
-    width_pct = interpolate_pct(morphed_dim[1], source_dim[1], target_dim[1])
+    #width_pct = interpolate_pct(morphed_dim[1], source_dim[1], target_dim[1])
 
-    if not np.isclose(width_pct, height_pct):
-        logger.debug("Relative height and width placement is not close. Using relative height.")
-
+    #if not np.isclose(width_pct, height_pct):
+    #    logger.debug("Relative height and width placement is not close. Using relative height.")
+    height_pct = height_pct * 100
     morphed_im = morph_class.generate_single_morphed(height_pct)
 
     crop_im = crop_image_to_size(morphed_im, morphed_dim, scale)
@@ -233,6 +237,7 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
         name += f"_{morphed_dim[0]}x{morphed_dim[1]}_{height_pct}pct.png"
 
         save_image(os.path.join(outdir, name), crop_im, detect_range=False)
+
     return crop_im
 
 
@@ -373,8 +378,9 @@ def _get_vpos_idx(large_size, small_size, pos):
         raise RuntimeError(f"Unexpected vpos of {pos}")
 
     # limit to image size, no wrapping,
-    vtop = max(0, vtop)
-    vbot = max(0, vbot)
+    if vtop < 0:
+        vtop += 1
+        vbot += 1
 
     return vtop, vbot
 
@@ -394,7 +400,8 @@ def _get_hpos_idx(large_size, small_size, pos):
         raise RuntimeError(f"Unexpected hpos of {pos}")
 
     # limit to image size, no wrapping,
-    hleft = max(0, hleft)
-    hright = max(0, hright)
+    if hleft < 0:
+        hleft += 1
+        hright += 1
 
     return hleft, hright

@@ -9,7 +9,7 @@ import os
 
 from nilt_base.NILTlogger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("NILTlogger.morhping")
 
 
 class MorphModel(tf.keras.Model):
@@ -59,6 +59,7 @@ class Morph:
         for kw, val in kwargs.items():
             assert hasattr(self, kw), f"No attribute to set with name '{kw}'"
             setattr(self, kw, val)
+            logger.debug(f"Setting {kw}={val}")
 
     def load_image_file(self, image):
         """ Load image from file.
@@ -292,9 +293,11 @@ class Morph:
                              f"to set weights from a file")
         preds = self.preds
 
-        if not 0 < morph_pct < 100:
+        if not 0 <= morph_pct <= 100:
             ValueError(f"Morph percentage should be an integer between 0-100. Got {morph_pct}")
         morph_pct = int(morph_pct)
+        if morph_pct == 100:
+            morph_pct = -1
 
 
         # apply maps and save results
@@ -308,7 +311,7 @@ class Morph:
         res_targets = tf.clip_by_value(res_targets, -1, 1)
         res_origins = tf.clip_by_value(res_origins, -1, 1)
 
-        results = res_targets * trg_strength[morph_pct] + res_origins * org_strength[i]
+        results = res_targets * trg_strength[morph_pct] + res_origins * org_strength[morph_pct]
         res_numpy = results.numpy()
 
         img = ((res_numpy[0] + 1) * 127.5).astype(np.uint8)
