@@ -1,5 +1,5 @@
 [general]
-project_name = "{timestamp}_morph_gratings_epoch{morph.parameters.train_epochs}_mpsz{morph.parameters.mp_sz}_wrp{morph.parameters.warp_scale}_af{morph.parameters.add_first}"
+project_name = "{timestamp}_morph_gratings_2_epoch{morph.parameters.train_epochs}_mpsz{morph.parameters.mp_sz}_wrp{morph.parameters.warp_scale}_af{morph.parameters.add_first}"
 
 [morph]
 specifications = "DiffMorph/data/grating_design_specifications.txt"
