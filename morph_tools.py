@@ -234,7 +234,7 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
 
         if not name:
             name = "single_morph"
-        name += f"_{morphed_dim[0]}x{morphed_dim[1]}_{height_pct}pct.png"
+        name += f"_{morphed_dim[0]}x{morphed_dim[1]}_{height_pct:.1f}pct.png"
 
         save_image(os.path.join(outdir, name), crop_im, detect_range=False)
 

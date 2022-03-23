@@ -55,8 +55,9 @@ for name_id, spec in specs.items():
     morph_class_trained = setup_morpher(source_image, target_image, output_folder=id_folder, **parameters)
 
     log.info(f"Generating {len(needed_dimensions)} images")
-    for dim in needed_dimensions:
-        im = single_image_morpher(morph_class_trained, dim, source_dim, target_dim, scale, name=name_id, save_images=True)
+    for j, dim in enumerate(needed_dimensions):
+        name = name_id + f"_im_{j:03d}"
+        im = single_image_morpher(morph_class_trained, dim, source_dim, target_dim, scale, name=name, save_images=True)
     #except Exception as e:
     #    log.error(f"Processing of {name_id} FAILED! Trying next! Got error: {e}")
 
