@@ -53,7 +53,7 @@ for ps in params:
     naming = "params"
     kwargs = {}
     for n, v in zip(names, ps):
-        naming += f"_n={v}"
+        naming += f"_{n}={v}"
         kwargs[n] = v
 
     folder = os.path.join(gen_outdir, naming)
