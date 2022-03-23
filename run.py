@@ -20,6 +20,7 @@ positions_path = st.read_input("morph.positions", datatype=str)
 optimized_dir = st.read_input("morph.optimized_dir", datatype=str)
 image_name = st.read_input("morph.image_name", datatype=str)
 scale = st.read_input("morph.scale", datatype=float)
+select_ids = st.read_input("morph.select_ids", datatype=list, default_value=None)
 
 try:
     st.read_input("morph.parameters.im_sz")
@@ -30,6 +31,12 @@ except ValueError:
 parameters = st.settings.get("morph").get("parameters", None)
 
 specs = get_morphing_info_from_specs(specification_path, positions_path, n_mod_fun=fmod)
+
+if select_ids:
+    selected = {}
+    for sel_id in select_ids:
+        selected[sel_id] = specs[sel_id]
+    specs = selected
 
 gen_outdir = st.output_folder
 i = 0
