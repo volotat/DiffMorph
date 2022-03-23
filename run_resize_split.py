@@ -153,6 +153,8 @@ for name_id, spec in specs.items():
         morph_tools.save_image(trg_name1, trg_splt1)
         morph_tools.save_image(trg_name2, trg_splt2)
 
+
+
         id_folder = os.path.join(gen_outdir, f"morphed_{name_id}_top")
         if not os.path.isdir(id_folder):
             os.makedirs(id_folder)

@@ -215,9 +215,9 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
         assert len(t) == 2, f"Dimensions must have length 2, got a dimension of {t}"
 
     height_pct = interpolate_pct(morphed_dim[0], source_dim[0], target_dim[0])
-    #width_pct = interpolate_pct(morphed_dim[1], source_dim[1], target_dim[1])
+    # width_pct = interpolate_pct(morphed_dim[1], source_dim[1], target_dim[1])
 
-    #if not np.isclose(width_pct, height_pct):
+    # if not np.isclose(width_pct, height_pct):
     #    logger.debug("Relative height and width placement is not close. Using relative height.")
     height_pct = height_pct * 100
     morphed_im = morph_class.generate_single_morphed(height_pct)
@@ -239,6 +239,67 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
         save_image(os.path.join(outdir, name), crop_im, detect_range=False)
 
     return crop_im
+
+
+def single_image_morpher_resize(morph_class, morphed_dim, source_dim, target_dim, scale, save_images=True, name=""):
+    """
+
+    Parameters
+    ----------
+    save_images
+    morph_class : morphing.Morph
+        A trained instance of the Morph class.
+    morphed_dim : tuple
+        Tuple (height, width) in um, dimensions of the wanted morphed image
+    source_dim : tuple
+        Tuple (height, width) in um, dimensions of the original source image
+    target_dim : tuple
+        Tuple (height, width) in um, dimensions of the original target
+    scale : float
+        Resolutions of image as: um pr pixel
+    save_images : bool or string
+        Folder to save images to default folder from morph_class or a specific folder
+    name : str
+        Name to be used for the file along with dimensions
+
+    Returns
+    -------
+    np.ndarray
+        Morhped image
+    """
+
+    for t in (morphed_dim, source_dim, target_dim):
+        assert isinstance(t, (tuple, list, np.ndarray)), f"Dimensions must be given as 2-tuples, not {t}"
+        assert len(t) == 2, f"Dimensions must have length 2, got a dimension of {t}"
+
+    height_pct = interpolate_pct(morphed_dim[0], source_dim[0], target_dim[0])
+    # width_pct = interpolate_pct(morphed_dim[1], source_dim[1], target_dim[1])
+
+    # if not np.isclose(width_pct, height_pct):
+    #    logger.debug("Relative height and width placement is not close. Using relative height.")
+    height_pct = height_pct * 100
+    morphed_im = morph_class.generate_single_morphed(height_pct)
+
+    crop_im = crop_image_to_size(morphed_im, (morphed_dim[0], morphed_dim[0]), scale)
+    vpx = int(np.ceil(morphed_dim[0] / scale))
+    hpx = int(np.ceil(morphed_dim[1] / scale))
+    re_im = cv2.cvtColor(cv2.resize(cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR), (hpx,vpx)), cv2.COLOR_BGR2RGB)
+
+    if save_images:
+        if isinstance(save_images, str):
+            outdir = save_images
+        else:
+            outdir = os.path.join(morph_class.output_folder, "single_morphed")
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
+        if not name:
+            name = "single_morph"
+        name += f"_{height_pct:.1f}pct_{morphed_dim[0]}x{morphed_dim[1]}.png"
+
+        save_image(os.path.join(outdir, name), re_im, detect_range=False)
+
+    return re_im
 
 
 def crop_image_to_size(image, size, scale, pos="cc"):
@@ -329,7 +390,7 @@ def pad_image_to_square(image, size=None, color="black", pos="cc"):
     if size is None:
         size = max(image.shape[0:2])
     (vsize, hsize, csize) = image.shape
-    if not (size, size) > (vsize, hsize):
+    if (size, size) < (vsize, hsize):
         msg = f"At least one dimension of the image {image.shape} is larger than the specified size of {size}."
         logger.error(msg)
         raise ValueError(msg)
