@@ -9,7 +9,7 @@ image_name = "mat_props.png"
 scale = 0.003
 
 [morph.parameters]
-train_epochs = 10
+train_epochs = 1000
 # im_sz = 1024
 mp_sz = 96
 warp_scale = 0.05
