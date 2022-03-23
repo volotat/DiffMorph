@@ -9,8 +9,10 @@ from glob import glob
 
 import matplotlib.pyplot as plt
 
-st = SetupTool("grating_morpher")
+st = SetupTool("grating_morpher_splitting")
 log = st.log.logger
+
+log.info("This tool will split images with high N value, set nvalue with 'morph.split_n' in settingsfile.")
 
 
 def fmod(n):
