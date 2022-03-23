@@ -1,0 +1,18 @@
+[general]
+project_name = "{timestamp}_test"
+
+[morph]
+specifications = "data/grating_design_specifications.txt"
+positions = "data/grating_position.txt"
+optimized_dir = "C:/Users/jse/Downloads/results_freeform_backup8/results_freeform_backup8"
+image_name = "mat_props.png"
+scale = 0.003
+
+[morph.parameters]
+train_epochs = 11
+# im_sz = 1024
+mp_sz = 96
+warp_scale = 0.05
+mult_scale = 0.4
+add_scale = 0.4
+add_first = false
