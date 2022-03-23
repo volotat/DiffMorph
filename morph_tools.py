@@ -229,12 +229,12 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
             outdir = save_images
         else:
             outdir = os.path.join(morph_class.output_folder, "single_morphed")
-            if not os.path.exists(outdir):
-                os.mkdir(outdir)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
 
         if not name:
             name = "single_morph"
-        name += f"_{morphed_dim[0]}x{morphed_dim[1]}_{height_pct:.1f}pct.png"
+        name += f"_{height_pct:.1f}pct_{morphed_dim[0]}x{morphed_dim[1]}.png"
 
         save_image(os.path.join(outdir, name), crop_im, detect_range=False)
 
