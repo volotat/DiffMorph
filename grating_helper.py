@@ -59,10 +59,6 @@ def get_morphing_info_from_specs(specification_path, positions_path, n_mod_fun=N
         id_count += 1
         specs = df_specs[i:i + 2]
         N = int(np.max(specs[spec_n_col]))
-        if n_mod_fun:
-            N = n_mod_fun(N)
-
-        id = f"N{N}_{id_count}"
         min_len = specs[spec_length_col].min()
         max_len = specs[spec_length_col].max()
         pos_this_n = df_pos.loc[df_pos[pos_n_col] == N]
@@ -71,11 +67,14 @@ def get_morphing_info_from_specs(specification_path, positions_path, n_mod_fun=N
         lengths = pos[pos_length_col].values
         widths = pos[pos_width_col].values
 
-        morhings[id] = {"N": N,
-                        "steps": len(pos),
-                        "lengths": lengths,
-                        "widths": widths,
-                        }
+        if n_mod_fun:
+            N = n_mod_fun(N)
+        name_id = f"N{N}_{id_count}"
+        morhings[name_id] = {"N": N,
+                             "steps": len(pos),
+                             "lengths": lengths,
+                             "widths": widths,
+                             }
 
     return morhings
 
