@@ -1,10 +1,10 @@
 [general]
-project_name = "{timestamp}_final_morph_gratings_epoch{morph.parameters.train_epochs}_mpsz{morph.parameters.mp_sz}_wrp{morph.parameters.warp_scale}_af{morph.parameters.add_first}"
+project_name = "{timestamp}_morph_gratings_epoch{morph.parameters.train_epochs}_mpsz{morph.parameters.mp_sz}_wrp{morph.parameters.warp_scale}_af{morph.parameters.add_first}"
 
 [morph]
 specifications = "DiffMorph/data/grating_design_specifications.txt"
 positions = "DiffMorph/data/grating_position.txt"
-optimized_dir = "DiffMorph/data/results_freeform_final"
+optimized_dir = "DiffMorph/data/results_freeform_backup8"
 image_name = "mat_props.png"
 scale = 0.003
 
