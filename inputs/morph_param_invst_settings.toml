@@ -1,0 +1,17 @@
+[general]
+project_name = "{timestamp}_parameter_invest"
+
+[morph]
+source_im = "DiffMorph/data/N12_top_source.png"
+target_im = "DiffMorph/data/N12_top_target.png"
+specifications = "DiffMorph/data/grating_design_specifications.txt"
+positions = "DiffMorph/data/grating_position.txt"
+scale = 0.003
+
+[parameters]
+train_epochs = [1000]
+mp_sz = [96]
+warp_scale = [0.05]
+mult_scale = [0.4]
+add_scale = [0.4]
+add_first = [false]
