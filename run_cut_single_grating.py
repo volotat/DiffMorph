@@ -105,7 +105,7 @@ for name_id, spec in specs.items():
         if not os.path.isdir(blob_folder):
             os.makedirs(blob_folder)
 
-        morph_class_trained = setup_morpher(src_blob, trg_blob, output_folder=blob_folder, **parameters)
+        morph_class_trained = setup_morpher(src_blob, trg_blob, output_folder=blob_folder, padding_args={"extra_pad":10}, **parameters)
 
         log.info(f"Generating {len(needed_dimensions)}")
         for j in range(len(morphed_images)):

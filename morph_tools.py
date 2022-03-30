@@ -159,7 +159,7 @@ def morph(source, target, steps, output_folder, **kwargs):
     return png_image_paths, npy_image_paths
 
 
-def setup_morpher(source, target, output_folder, **kwargs):
+def setup_morpher(source, target, output_folder, padding_args=None, **kwargs):
     """
 
     Parameters
@@ -193,7 +193,7 @@ def setup_morpher(source, target, output_folder, **kwargs):
         target = make_image_rgb(target)
 
     # Pad them to the same square size
-    source, target = pad_images_to_same_square(source, target, color="black")
+    source, target = pad_images_to_same_square(source, target, color="black", **padding_args)
 
     src_name_padded = os.path.join(output_folder, "source_image_padded.png")
     trg_name_padded = os.path.join(output_folder, "target_image_padded.png")
@@ -437,7 +437,7 @@ def crop_image_to_size(image, size, scale, pos="cc"):
     return crop
 
 
-def pad_image_to_square(image, size=None, color="black", pos="cc"):
+def pad_image_to_square(image, size=None, extra_pad=0, color="black", pos="cc"):
     """ Pad an image to make it a square
 
     Parameters
@@ -446,6 +446,8 @@ def pad_image_to_square(image, size=None, color="black", pos="cc"):
         Image to pad
     size : int (optional)
         Size to pad to.
+    extra_pad : int (optional)
+        Number of extra pixels to each side. Default 0.
     color : string or list
         Color to pad with either a string "black", "red". Default: "black"
     pos : str
@@ -462,6 +464,7 @@ def pad_image_to_square(image, size=None, color="black", pos="cc"):
     assert color.lower() in COLOR_LOOKUP, f"Color '{color}' not found."
     bg = COLOR_LOOKUP.get(color)
 
+    assert isinstance(extra_pad, int), f"extra_pad must be an int, not {type(extra_pad).__name__}"
     assert isinstance(pos, str), f"Expected argument 'pos' to be of type 'str', not {type(pos).__name__}"
     assert len(pos) == 2, f"Argument 'pos' must have length 2, not {len(pos)}"
     vpos = pos[0].lower()
@@ -474,6 +477,7 @@ def pad_image_to_square(image, size=None, color="black", pos="cc"):
 
     if size is None:
         size = max(image.shape[0:2])
+    size += 2 * extra_pad
     (vsize, hsize, csize) = image.shape
     if (size, size) < (vsize, hsize):
         msg = f"At least one dimension of the image {image.shape} is larger than the specified size of {size}."
