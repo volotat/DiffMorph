@@ -89,7 +89,7 @@ def save_image(path, array, detect_range=True):
 
     if detect_range:
         if np.max(array) <= 1.0:
-            logger.info(f"Fixing range before saving {path}")
+            logger.debug(f"Fixing range before saving {path}")
             array = array * 255
 
     array = make_image_rgb(array)
@@ -97,7 +97,7 @@ def save_image(path, array, detect_range=True):
     if not succes:
         raise RuntimeError("Image not saved sucessfully")
     else:
-        logger.info(f"Successfully saved image to {path}")
+        logger.debug(f"Successfully saved image to {path}")
 
 
 def interpolate_pct(wanted, source, target):

@@ -6,6 +6,7 @@ import tensorflow_addons as tfa
 import cv2
 from tqdm import tqdm
 import os
+import matplotlib.pyplot as plt
 
 from nilt_base.NILTlogger import get_logger
 
@@ -46,6 +47,7 @@ class Morph:
 
     preds = None
     save_preds = False
+    plot_loss = True
     origins = None
     targets = None
     fps = 30
@@ -164,21 +166,24 @@ class Morph:
 
         epoch = 0
         template = 'Epoch {}, Loss: {}'
+        loss = np.full((self.train_epochs), fill_value=np.nan)
 
-        t = tqdm(range(self.train_epochs), desc=template.format(epoch, train_loss.result()))
-
-
-        for i in t:
+        for i in range(self.train_epochs):
             epoch = i + 1
+            if epoch == 1:
+                print(f"\tTraining ({self.train_epochs} epochs): 0%", end=" ")
 
-            t.set_description(template.format(epoch, train_loss.result()))
-            t.refresh()
+            loss[i] = train_loss.result()
 
             train_step(maps, origins, targets)
 
             if (epoch < 100 and epoch % 10 == 0) or \
                     (epoch < 1000 and epoch % 100 == 0) or \
                     (epoch % 1000 == 0):
+
+                # "Replace" tqdm
+                print(f"{epoch/self.train_epochs*100:.0f}%", end=" ")
+
                 preds = model(maps, training=False)[:1]
                 preds = tf.image.resize(preds, [self.im_sz, self.im_sz])
 
@@ -195,6 +200,16 @@ class Morph:
                             cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR))
 
                 self.preds = preds.numpy()
+
+        print("!! Done Training !!")
+
+        if self.plot_loss:
+            plt.semilogy(np.arange(1, self.train_epochs+1), loss, "*-")
+            plt.title("Loss curve")
+            plt.xlabel("Epoch")
+            plt.xlabel("Loss")
+            plt.savefig(os.path.join(self.output_folder, "loss_curve.png"))
+            plt.clf()
 
         if self.save_preds:
             np.save(os.path.join(self.output_folder, "preds.npy"), self.preds)

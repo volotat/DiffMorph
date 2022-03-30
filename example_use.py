@@ -143,3 +143,22 @@ for source, target in zip(source_images, target_images):
 
 ## Fix specification file
 """
+te = 1000
+for i in range(1000):
+    epoch = i + 1
+    if epoch == 1:
+        print(f"Training ({te} epochs): ", end=" ")
+
+
+    if (epoch < 100 and epoch % 10 == 0) or \
+            (epoch < 1000 and epoch % 100 == 0) or \
+            (epoch % 1000 == 0):
+        # "Replace" tqdm
+        print(f"{epoch / te * 100:.1f}", end=" ")
+
+    time.sleep(0.01)
+
+print("Done Training!")
+
+
+print("Next thing")

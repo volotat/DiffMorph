@@ -3,3 +3,5 @@ tensorflow
 tensorflow-addons
 opencv-python
 tqdm
+scikit-image
+# nilt_base
