@@ -204,12 +204,13 @@ class Morph:
         print("!! Done Training !!")
 
         if self.plot_loss:
+            plt.figure()
             plt.semilogy(np.arange(1, self.train_epochs+1), loss, "*-")
             plt.title("Loss curve")
             plt.xlabel("Epoch")
             plt.xlabel("Loss")
             plt.savefig(os.path.join(self.output_folder, "loss_curve.png"))
-            plt.clf()
+            plt.close()
 
         if self.save_preds:
             np.save(os.path.join(self.output_folder, "preds.npy"), self.preds)

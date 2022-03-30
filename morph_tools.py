@@ -270,7 +270,7 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
     return crop_im
 
 
-def single_blob_morpher(morph_class, pct, save_images=True, name=""):
+def single_blob_morpher(morph_class, pct, crop_threshold=10, save_images=True, name=""):
     """
 
     Parameters
@@ -302,8 +302,9 @@ def single_blob_morpher(morph_class, pct, save_images=True, name=""):
     height_pct = pct * 100
     morphed_im = morph_class.generate_single_morphed(height_pct)
 
-    rows = np.argwhere(np.sum(morphed_im, axis=(2, 1)))
-    cols = np.argwhere(np.sum(morphed_im, axis=(2, 0)))
+    mean_im = np.mean(morphed_im, axis=2) >= crop_threshold
+    rows = np.argwhere(np.sum(mean_im, axis=1))
+    cols = np.argwhere(np.sum(mean_im, axis=0))
     min_row, max_row = np.min(rows), np.max(rows) + 1
     min_col, max_col = np.min(cols), np.max(cols) + 1
 
