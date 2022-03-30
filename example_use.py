@@ -1,16 +1,49 @@
 import os
 import numpy as np
+import cv2
 import morph_tools
 from morph_tools import morph, crop_image_to_size, pad_image_to_square, load_image, save_image, \
     pad_images_to_same_square
 
 import grating_helper
 
+
+
+"""
+Single feature at a time morph
+"""
+
+org = load_image("data/x_p_1.625_1nm (Phone).png")
+trg = load_image("data/x_p_1.925_1nm (Phone).png")
+
+org_keypoints = morph_tools.find_blobs(org)
+trg_keypoints = morph_tools.find_blobs(trg)
+
+
+print(org_keypoints)
+print(trg_keypoints)
+
+blob_dir = "data/blobs"
+try:
+    os.mkdir(blob_dir)
+except FileExistsError:
+    pass
+
+for i, blob in enumerate(org_keypoints):
+    blob_file = os.path.join(blob_dir, f"org_blob_{i:02d}.png")
+    save_image(blob_file, blob.image, detect_range=True)
+for i, blob in enumerate(trg_keypoints):
+    blob_file = os.path.join(blob_dir, f"trg_blob_{i:02d}.png")
+    save_image(blob_file, blob.image, detect_range=True)
+
+
+
+
+
 """
 Expample of how to use the functions in morph_tools, to load two images, pad them to be square,
 morph between them and finialy crop the morhped images to a given size.
 
-"""
 
 # Load images
 org = load_image("data/from_11.png")
@@ -52,6 +85,7 @@ for i, p in enumerate(png_image_paths):
     save_image(os.path.join(final_dir, f"final_{i:05d}.png"), im)
 
 print("Done")
+"""
 
 
 ## New example

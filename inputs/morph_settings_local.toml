@@ -1,5 +1,5 @@
 [general]
-project_name = "{timestamp}_test"
+project_name = "yeee_test"
 
 [morph]
 specifications = "data/grating_design_specifications.txt"
@@ -7,6 +7,7 @@ positions = "data/grating_position.txt"
 optimized_dir = "C:/Users/jse/Downloads/results_freeform_backup8/results_freeform_backup8"
 image_name = "mat_props.png"
 scale = 0.003
+select_ids = ["N12_1", "N11_2"]
 
 [morph.parameters]
 train_epochs = 11

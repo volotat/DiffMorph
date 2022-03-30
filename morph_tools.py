@@ -6,6 +6,8 @@ from morphing import Morph
 import cv2
 from nilt_base.NILTlogger import get_logger
 
+from skimage import measure
+
 logger = get_logger("NILTlogger.morph_tool")
 
 COLOR_LOOKUP = {"black": [0, 0, 0],
@@ -58,6 +60,10 @@ def load_image(file):
     np.ndarray
 
     """
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"No such file: {file}")
+    if not os.path.isfile(file):
+        raise FileNotFoundError(f"{file} is not a file")
     im = cv2.imread(file, cv2.IMREAD_COLOR)
     return cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
@@ -78,22 +84,45 @@ def save_image(path, array, detect_range=True):
     -------
 
     """
+    if not os.path.isdir(os.path.dirname(path)):
+        raise FileNotFoundError(f"Directory {os.path.dirname(path)} does not exist.")
+
     if detect_range:
         if np.max(array) <= 1.0:
-            array *= 255
+            logger.info(f"Fixing range before saving {path}")
+            array = array * 255
 
     array = make_image_rgb(array)
     succes = cv2.imwrite(path, cv2.cvtColor(array.astype(np.uint8), cv2.COLOR_RGB2BGR))
     if not succes:
         raise RuntimeError("Image not saved sucessfully")
     else:
-        logging.debug(f"Successfully saved image to {path}")
+        logger.info(f"Successfully saved image to {path}")
 
 
 def interpolate_pct(wanted, source, target):
     if source > target:
         raise ValueError("Source should be smaller than target value")
     return (wanted - source) / (target - source)
+
+
+def find_blobs(image):
+    """ Find individual structures in an im
+    
+    Parameters
+    ----------
+    image : cv2 image
+
+    Returns
+    -------
+    """
+    if np.ndim(image) == 3:
+        image = np.mean(image, axis=2)
+    binary = image > 127.5
+    blob_labels = measure.label(binary)
+    blob_features = measure.regionprops(blob_labels)
+
+    return blob_features
 
 
 def morph(source, target, steps, output_folder, **kwargs):
@@ -241,6 +270,62 @@ def single_image_morpher(morph_class, morphed_dim, source_dim, target_dim, scale
     return crop_im
 
 
+def single_blob_morpher(morph_class, pct, save_images=True, name=""):
+    """
+
+    Parameters
+    ----------
+    save_images
+    morph_class : morphing.Morph
+        A trained instance of the Morph class.
+    pct : float
+        Percentage of the transition between source and target, should be in the range [0, 1]
+    source_dim : tuple
+        Tuple (height, width) in um, dimensions of the original source image
+    target_dim : tuple
+        Tuple (height, width) in um, dimensions of the original target
+    scale : float
+        Resolutions of image as: um pr pixel
+    save_images : bool or string
+        Folder to save images to default folder from morph_class or a specific folder
+    name : str
+        Name to be used for the file along with dimensions
+
+    Returns
+    -------
+    np.ndarray
+        Morhped image
+    """
+    if pct > 1.0:
+        ValueError(f"Morph percentage should be a float between [0, 1]. Got {pct}")
+
+    height_pct = pct * 100
+    morphed_im = morph_class.generate_single_morphed(height_pct)
+
+    rows = np.argwhere(np.sum(morphed_im, axis=(2, 1)))
+    cols = np.argwhere(np.sum(morphed_im, axis=(2, 0)))
+    min_row, max_row = np.min(rows), np.max(rows) + 1
+    min_col, max_col = np.min(cols), np.max(cols) + 1
+
+    crop_im = morphed_im[min_row:max_row, min_col:max_col, ...]
+
+    if save_images:
+        if isinstance(save_images, str):
+            outdir = save_images
+        else:
+            outdir = os.path.join(morph_class.output_folder, "morhped_blob")
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
+        if not name:
+            name = "single_blob"
+        name += f"_{height_pct:.1f}pct.png"
+
+        save_image(os.path.join(outdir, name), crop_im, detect_range=False)
+
+    return crop_im
+
+
 def single_image_morpher_resize(morph_class, morphed_dim, source_dim, target_dim, scale, save_images=True, name=""):
     """
 
@@ -283,7 +368,7 @@ def single_image_morpher_resize(morph_class, morphed_dim, source_dim, target_dim
     crop_im = crop_image_to_size(morphed_im, (morphed_dim[0], morphed_dim[0]), scale)
     vpx = int(np.ceil(morphed_dim[0] / scale))
     hpx = int(np.ceil(morphed_dim[1] / scale))
-    re_im = cv2.cvtColor(cv2.resize(cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR), (hpx,vpx)), cv2.COLOR_BGR2RGB)
+    re_im = cv2.cvtColor(cv2.resize(cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR), (hpx, vpx)), cv2.COLOR_BGR2RGB)
 
     if save_images:
         if isinstance(save_images, str):

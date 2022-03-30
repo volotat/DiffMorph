@@ -167,6 +167,7 @@ class Morph:
 
         t = tqdm(range(self.train_epochs), desc=template.format(epoch, train_loss.result()))
 
+
         for i in t:
             epoch = i + 1
 
