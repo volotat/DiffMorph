@@ -37,6 +37,7 @@ parameters = st.settings.get("morph").get("parameters", None)
 
 specs = get_morphing_info_from_specs(specification_path, positions_path, n_mod_fun=fmod)
 
+# If only certain ID's from the specification file should be morphed
 if select_ids:
     selected = {}
     for sel_id in select_ids:
@@ -105,11 +106,11 @@ for name_id, spec in specs.items():
         if not os.path.isdir(blob_folder):
             os.makedirs(blob_folder)
 
-        morph_class_trained = setup_morpher(src_blob, trg_blob, output_folder=blob_folder, padding_args={"extra_pad":10}, **parameters)
+        morph_class_trained = setup_morpher(src_blob, trg_blob, output_folder=blob_folder,
+                                            padding_args={"extra_pad": 10}, **parameters)
 
         log.info(f"Generating {len(needed_dimensions)}")
         for j in range(len(morphed_images)):
-
             # Get morphing for this dimension and insert into the placeholder image
             im = morph_tools.single_blob_morpher(morph_class_trained, pct[j], save_images=True)
             offset_h = int(np.round(src_midpoints[i][0] + (trg_midpoints[i][0] - src_midpoints[i][0]) * pct[j]))
@@ -126,7 +127,6 @@ for name_id, spec in specs.items():
                                f'morphed_{i:03d}_{pct[i]:0.2f}pct_'
                                f'{needed_dimensions[i][0]:0.3f}x{needed_dimensions[i][1]:0.3f}.png')
         morph_tools.save_image(im_name, im)
-
 
         # except Exception as e:
         #    log.error(f"Processing of {name_id} FAILED! Trying next! Got error: {e}")
