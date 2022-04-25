@@ -18,6 +18,19 @@ def fmod(n):
     return n
 
 
+def threshold_image(image, threshold):
+    if isinstance(image, str):
+        image = morph_tools.load_image(image)
+    elif isinstance(image, np.ndarray):
+        pass
+    else:
+        raise ValueError("Input be a string or numpy ndarray")
+
+    binary = np.zeros_like(image)
+    binary[image >= threshold] = 1
+    return binary
+
+
 def split_image_to_blobs(path):
     # Split images into individual blobs
     image = morph_tools.load_image(path)
@@ -82,6 +95,10 @@ if __name__ == "__main__":
     from_identifier = st.read_input("morph.from_identifier", datatype=str, default_value="right")
     scale = st.read_input("morph.scale", datatype=float)  # resolution of image as um/px
     select_ids = st.read_input("morph.select_ids", datatype=list, default_value=False)
+    thresholds = st.read_input("morph.thresholds", datatype=(list, tuple, float, int), default_value=(127.5,))
+    if isinstance(thresholds, (float, int)):
+        thresholds = (thresholds, )
+    log.info("Thresholding image at: " + ", ".join(str(th) for th in thresholds))
 
     try:
         st.read_input("morph.parameters.im_sz")
@@ -183,25 +200,38 @@ if __name__ == "__main__":
             efficiencies = []
 
             for name in morphed_fnames:
-                od = auto_config_generator.analyze_image(name,
-                                                         os.path.join(args.rcwa, auto_config_generator.DEFAULT_CONFIG),
-                                                         os.path.join(args.rcwa, "configs/obj_modes_1.txt"))
-                effs, _ = auto_config_generator.compute_efficincy(od,
-                                                                  os.path.join(args.rcwa, "configs/obj_modes_1.txt"))
-                efficiencies.append(np.mean(effs, axis=1))
-
+                eff_th = []
+                for th in thresholds:
+                    th_image = threshold_image(name, th)
+                    th_im_name = os.path.join(os.path.dirname(name), f"th_{th}_" + os.path.basename(name))
+                    morph_tools.save_image(th_im_name, th_image)
+                    od = auto_config_generator.analyze_image(th_im_name,
+                                                             os.path.join(args.rcwa, auto_config_generator.DEFAULT_CONFIG),
+                                                             os.path.join(args.rcwa, "configs/obj_modes_1.txt"),
+                                                             output_dir=os.path.join(gen_outdir, "efficiency_analysis", os.path.splitext(os.path.basename(name))[0]))
+                    effs, _ = auto_config_generator.compute_efficincy(od,
+                                                                      os.path.join(args.rcwa, "configs/obj_modes_1.txt"))
+                    eff_th.append(np.mean(effs))
+                efficiencies.append(eff_th)
             efficiencies = np.asarray(efficiencies)
+
+            auto_config_generator.pretty_print_array(efficiencies.T*100,
+                                                     row_label="Threshold",
+                                                     col_label="Morph %",
+                                                     row_ticks=thresholds,
+                                                     col_ticks=pct*100,
+                                                     title=f"{name_id} - Efficiencies, %")
 
             plt.figure()
             plt.plot(pct, efficiencies * 100, "*-")
             plt.xlabel("Morphed %")
             plt.ylabel("Efficiency %")
             plt.title(f"Efficiency of morphed {name_id}")
-            plt.legend([f"Impl. {impl}" for impl in range(efficiencies.shape[1])])
+            plt.legend([f"Threshold: {th}" for th in thresholds])
             plt.savefig(os.path.join(id_folder, f"efficiency_{name_id}.png"))
             plt.close()
 
-            average_efficency.append(np.mean(efficiencies, axis=1))
+            average_efficency.append(np.mean(efficiencies, axis=0))
             average_efficency_names.append(name_id)
 
         if args.clean_work_files:
@@ -216,7 +246,7 @@ if __name__ == "__main__":
         plt.xlabel("Grating IDs")
         plt.ylabel("Average efficiency %")
         plt.title(f"Overall average efficiencies (Date: {datetime.datetime.today().strftime('%Y-%m-%d')})")
-        plt.legend([f"Impl. {impl}" for impl in range(efficiencies.shape[1])])
+        plt.legend([f"Threshold. {th}" for th in thresholds])
         plt.savefig(os.path.join(gen_outdir, f"efficiency_overview.png"))
         plt.close()
 
