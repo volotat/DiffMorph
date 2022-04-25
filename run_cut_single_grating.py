@@ -208,7 +208,7 @@ if __name__ == "__main__":
                     od = auto_config_generator.analyze_image(th_im_name,
                                                              os.path.join(args.rcwa, auto_config_generator.DEFAULT_CONFIG),
                                                              os.path.join(args.rcwa, "configs/obj_modes_1.txt"),
-                                                             output_dir=os.path.join(gen_outdir, "efficiency_analysis", os.path.splitext(os.path.basename(name))[0]))
+                                                             output_dir=os.path.join(gen_outdir, "efficiency_analysis", name_id, os.path.splitext(os.path.basename(name))[0]))
                     effs, _ = auto_config_generator.compute_efficincy(od,
                                                                       os.path.join(args.rcwa, "configs/obj_modes_1.txt"))
                     eff_th.append(np.mean(effs))
