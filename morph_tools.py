@@ -105,6 +105,23 @@ def interpolate_pct(wanted, source, target):
         raise ValueError("Source should be smaller than target value")
     return (wanted - source) / (target - source)
 
+def bbox_midpoint(min_row, min_col, max_row, max_col):
+    """ Get the midpoint of a bounding box
+
+    Parameters
+    ----------
+    min_row : int
+    min_col : int
+    max_row : int
+    max_col : int
+
+    Returns
+    -------
+    tuple
+        Midpoint af the bounding box, tuple of (middle row, middle col) as floats
+
+    """
+    return (min_row + max_row) / 2, (min_col + max_col) / 2
 
 def find_blobs(image):
     """ Find individual structures in an im
@@ -115,6 +132,7 @@ def find_blobs(image):
 
     Returns
     -------
+    skimage.measure.regionprops
     """
     if np.ndim(image) == 3:
         image = np.mean(image, axis=2)
@@ -275,17 +293,12 @@ def single_blob_morpher(morph_class, pct, crop_threshold=10, save_images=True, n
 
     Parameters
     ----------
-    save_images
     morph_class : morphing.Morph
         A trained instance of the Morph class.
     pct : float
         Percentage of the transition between source and target, should be in the range [0, 1]
-    source_dim : tuple
-        Tuple (height, width) in um, dimensions of the original source image
-    target_dim : tuple
-        Tuple (height, width) in um, dimensions of the original target
-    scale : float
-        Resolutions of image as: um pr pixel
+    crop_threshold : int or float
+        Value between 0 and 255, threshold value for binarize image, when cropping out structure.
     save_images : bool or string
         Folder to save images to default folder from morph_class or a specific folder
     name : str

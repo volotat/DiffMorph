@@ -1,0 +1,2 @@
+i	 j	type 	level	weight
++1 	 0  T		1.0  	1.0

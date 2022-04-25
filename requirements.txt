@@ -1,7 +1,10 @@
-numpy
-tensorflow
+numpy~=1.22.3
+tensorflow~=2.8.0
 tensorflow-addons
-opencv-python
-tqdm
-scikit-image
+opencv-python~=4.5.5.64
+tqdm~=4.63.0
+scikit-image~=0.19.2
 # nilt_base
+argparse~=1.4.0
+matplotlib~=3.5.1
+pandas~=1.4.1

@@ -1,0 +1,195 @@
+{
+      "environment": {
+            "input_dir": ".",
+            "output_dir": "C:\\Users\\jse\\projects\\DiffMorph\\outputs\\testing\\morphed_N6_10",
+            "output_dir_use_ids": false,
+            "plugin_dir": "",
+            "core_num": 0
+      },
+      "simulation": {
+            "nG": 200,
+            "domain": {
+                  "x0": 0.0,
+                  "y0": 0.0,
+                  "Lx": 2.696,
+                  "Ly": 0.498
+            },
+            "discretization": {
+                  "dx": 0.003,
+                  "dy": 0.003
+            },
+            "layers": {
+                  "layer_01": {
+                        "type": "uniform",
+                        "thickness": 1.0,
+                        "epsilon": 2.2911
+                  },
+                  "layer_02": {
+                        "type": "design",
+                        "thickness": 0.5,
+                        "epsilon": "12.3201+4.2e-4j",
+                        "epsilon_background": 1,
+                        "sublayer_num": 1
+                  },
+                  "layer_03": {
+                        "type": "uniform",
+                        "thickness": 1.0,
+                        "epsilon": 1
+                  }
+            },
+            "load_cases": [
+                  {
+                        "inc_wave": {
+                              "wavelength": 0.94,
+                              "theta": 0.0,
+                              "phi": 0.0,
+                              "amplitude": [
+                                    1.0,
+                                    0.0
+                              ],
+                              "phase": [
+                                    0.0,
+                                    0.0
+                              ]
+                        }
+                  },
+                  {
+                        "inc_wave": {
+                              "wavelength": 0.94,
+                              "theta": 0.0,
+                              "phi": 0.0,
+                              "amplitude": [
+                                    0.0,
+                                    1.0
+                              ],
+                              "phase": [
+                                    0.0,
+                                    0.0
+                              ]
+                        }
+                  }
+            ],
+            "monitors": {
+                  "mode_monitor_01": {
+                        "type": "ModeMonitor"
+                  },
+                  "mat_prop_monitor_01": {
+                        "type": "MatPropMonitor"
+                  }
+            }
+      },
+      "design_variables": {
+            "des_var_01": {
+                  "type": "PixelPillars",
+                  "h_init": 0.5,
+                  "h_init_rand_amplitude": 0.1,
+                  "h_init_rand_seed": 110,
+                  "file_reader": {
+                        "enabled": true,
+                        "type": "ImageReader",
+                        "image_file_name": "",
+                        "des_var_file_name": "outputs/yeee_test\\morphed_N6_10\\morphed_011_0.54pct_2.696x0.498.png",
+                        "interp_type": "nearest"
+                  },
+                  "design_domain": {
+                        "x_range": "all",
+                        "y_range": "all"
+                  },
+                  "operator_groups": {
+                        "group_01": {
+                              "layer": "layer_02",
+                              "out_of_plane_dir": "+z",
+                              "apply_to": "design_domain",
+                              "operators": {
+                                    "filter": {
+                                          "type": "GaussianFilter2D",
+                                          "sigma": 0.06
+                                    },
+                                    "beta_projection": {
+                                          "type": "BetaProjection",
+                                          "beta": 10.0,
+                                          "threshold": 0.5
+                                    },
+                                    "rasterizer": {
+                                          "type": "PixelPillarsRasterizer"
+                                    }
+                              }
+                        }
+                  }
+            }
+      },
+      "stochastic": {
+            "enabled": false,
+            "variables": {
+                  "threshold": [
+                        "config[\"design_variables\"][\"des_var_01\"][\"operator_groups\"][\"group_01\"][\"operators\"][\"beta_projection\"][\"threshold\"]"
+                  ]
+            },
+            "sampling": {
+                  "type": "table",
+                  "table_file_name": "robust_er_di.txt"
+            }
+      },
+      "optimization": {
+            "enabled": false,
+            "fd_check": {
+                  "enabled": false,
+                  "implementation_id": 0,
+                  "des_var_id": 0,
+                  "epsilon": 1e-05
+            },
+            "optimizer": "MMA",
+            "step_num": 250,
+            "step_increment": 50,
+            "objective": {
+                  "type": "WeightedModeObjective",
+                  "monitors": [
+                        "mode_monitor_01"
+                  ],
+                  "obj_modes_per_load_case": [
+                        "obj_modes_1.txt"
+                  ],
+                  "obj_weights_per_load_case": [
+                        1.0
+                  ]
+            },
+            "transformations": {
+                  "proj_beta_ramp": {
+                        "type": "ExpFieldUpdate",
+                        "fields_to_update": [
+                              "config[\"design_variables\"][\"des_var_01\"][\"operator_groups\"][\"group_01\"][\"operators\"][\"beta_projection\"][\"beta\"]"
+                        ],
+                        "params": {
+                              "start": 10.0,
+                              "end": 300.0,
+                              "exp_factor": 3.0
+                        }
+                  }
+            }
+      },
+      "storage": {
+            "simulation": [
+                  {
+                        "type": "ModeStorage",
+                        "monitor": "mode_monitor_01",
+                        "file_name": "modes.hdf5"
+                  },
+                  {
+                        "type": "MatPropStorage",
+                        "monitor": "mat_prop_monitor_01",
+                        "file_name": "mat_props.hdf5"
+                  }
+            ],
+            "design_variables": [
+                  {
+                        "name": "des_var_01",
+                        "file_name": "des_vars.hdf5"
+                  }
+            ],
+            "objective": [
+                  {
+                        "file_name": "objective.hdf5"
+                  }
+            ]
+      }
+}
