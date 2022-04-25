@@ -7,7 +7,8 @@ positions = "data/grating_position.txt"
 optimized_dir = "C:/Users/jse/Downloads/results_freeform_backup8/results_freeform_backup8"
 image_name = "mat_props.png"
 scale = 0.003
-select_ids = ["N6_10", "N6_11"] # ["N12_1", "N11_2"]
+select_ids = ["N8_7", "N10_3"] # ["N12_1", "N11_2"]
+thresholds = [100, 200]
 
 [morph.parameters]
 train_epochs = 11
