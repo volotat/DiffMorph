@@ -7,7 +7,7 @@ positions = "DiffMorph/data/grating_position.txt"
 optimized_dir = "DiffMorph/data/results_freeform_final_new"
 image_name = "mat_props.png"
 scale = 0.003
-thresholds = [60, 90, 127.5, 150]
+thresholds = [60, 90, 127, 150]
 
 [morph.parameters]
 train_epochs = 200
