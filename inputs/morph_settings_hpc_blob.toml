@@ -1,5 +1,5 @@
 [general]
-project_name = "{timestamp}_morph_gratings_epoch{morph.parameters.train_epochs}_mpsz{morph.parameters.mp_sz}_wrp{morph.parameters.warp_scale}_af{morph.parameters.add_first}"
+project_name = "{timestamp}_morph_blobs_v1_epoch{morph.parameters.train_epochs}_mpsz{morph.parameters.mp_sz}_wrp{morph.parameters.warp_scale}_af{morph.parameters.add_first}"
 
 [morph]
 specifications = "DiffMorph/data/grating_design_specifications.txt"
@@ -10,7 +10,7 @@ scale = 0.003
 thresholds = [60, 90, 127.5, 150]
 
 [morph.parameters]
-train_epochs = 1000
+train_epochs = 200
 # im_sz = 1024
 mp_sz = 96
 warp_scale = 0.05
