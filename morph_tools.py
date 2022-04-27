@@ -5,6 +5,7 @@ import numpy as np
 from morphing import Morph
 import cv2
 from nilt_base.NILTlogger import get_logger
+from scipy.ndimage import gaussian_filter
 
 from skimage import measure
 
@@ -105,6 +106,7 @@ def interpolate_pct(wanted, source, target):
         raise ValueError("Source should be smaller than target value")
     return (wanted - source) / (target - source)
 
+
 def bbox_midpoint(min_row, min_col, max_row, max_col):
     """ Get the midpoint of a bounding box
 
@@ -122,6 +124,7 @@ def bbox_midpoint(min_row, min_col, max_row, max_col):
 
     """
     return (min_row + max_row) / 2, (min_col + max_col) / 2
+
 
 def find_blobs(image):
     """ Find individual structures in an im
@@ -315,7 +318,7 @@ def single_blob_morpher(morph_class, pct, crop_threshold=10, save_images=True, n
     height_pct = pct * 100
     morphed_im = morph_class.generate_single_morphed(height_pct)
 
-    mean_im = np.mean(morphed_im, axis=2) >= crop_threshold
+    mean_im = np.mean(gaussian_filter(morphed_im, sigma=2), axis=2) >= crop_threshold
     rows = np.argwhere(np.sum(mean_im, axis=1))
     cols = np.argwhere(np.sum(mean_im, axis=0))
     min_row, max_row = np.min(rows), np.max(rows) + 1
