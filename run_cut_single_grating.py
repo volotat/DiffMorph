@@ -39,7 +39,7 @@ def split_image_to_blobs(path):
     im_midpoints = [morph_tools.bbox_midpoint(*blob.bbox) for blob in im_keypoints]
 
     im_blob_files = []
-    im_folder = os.path.dirname(target_image)
+    im_folder = os.path.dirname(path)
     for i, blob in enumerate(im_keypoints):
         blob_file = os.path.join(im_folder, f"blob_{i:02d}.png")
         im_blob_files.append(blob_file)
@@ -235,9 +235,12 @@ if __name__ == "__main__":
             average_efficency_names.append(name_id)
 
         if args.clean_work_files:
-            shutil.rmtree(blob_folder)
-            for f in (*trg_blob_files, *src_blob_files):
-                os.remove(f)
+            for i in range(n_blob):
+                blob_folder = os.path.join(id_folder, f"blob_{i:02d}")
+                shutil.rmtree(blob_folder)
+            if args.compute_efficiency:
+                shutil.rmtree(os.path.join(gen_outdir, "efficiency_analysis"))
+
             log.info("DEBUG: Removed temporay files")
 
     if args.compute_efficiency:

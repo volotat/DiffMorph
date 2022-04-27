@@ -1,17 +1,17 @@
 [general]
-project_name = "yeee_test"
+project_name = "jesus_test"
 
 [morph]
 specifications = "data/grating_design_specifications.txt"
 positions = "data/grating_position.txt"
-optimized_dir = "C:/Users/jse/Downloads/results_freeform_backup8/results_freeform_backup8"
+optimized_dir = "C:/Users/jse/Downloads/results_freeform_final/"
 image_name = "mat_props.png"
 scale = 0.003
-select_ids = ["N8_7", "N10_3"] # ["N12_1", "N11_2"]
-thresholds = [100, 200]
+select_ids = ["N12_1", "N8_7", "N10_3"] # ["N12_1", "N11_2"]
+thresholds = 126
 
 [morph.parameters]
-train_epochs = 11
+train_epochs = 12
 # im_sz = 1024
 mp_sz = 96
 warp_scale = 0.05
