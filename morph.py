@@ -216,7 +216,7 @@ if __name__ == "__main__":
     dom_a = cv2.imread(args.source, cv2.IMREAD_COLOR)
     dom_b = cv2.imread(args.target, cv2.IMREAD_COLOR)
 
-    # TODO(cardboardcode): Implement safeguard to check if both dom_a and dom_b are of equal dimensions.
+    # Checks if input and destination image are of the same dimensions.
     if (dom_a.shape[1] != dom_b.shape[1] or dom_a.shape[0] != dom_b.shape[0]):
         print("Input Image is not the same dimensions as Destination Image.")
         sys.exit()
